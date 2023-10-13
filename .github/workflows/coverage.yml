@@ -1,0 +1,27 @@
+name: Test and Deploy Coverage
+run-name: Test and Deploy Coverage
+on:
+  push:
+    branches:
+      - stage
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.8
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Tests
+        run: npm run test
+      - name: Upload Coverage
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.BASALT_TOKEN }}
+          publish_dir: ./coverage/lcov-report
