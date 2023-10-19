@@ -41,9 +41,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@socket.io/cluster-adapter": "^0.2.2",
-    "@socket.io/sticky": "^1.0.4",
-    "socket.io": "^4.7.2",
-    "socket.io-client": "^4.7.2"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.32.0"
   }
 }
