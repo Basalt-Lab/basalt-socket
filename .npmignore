@@ -1,10 +1,11 @@
-.idea
 .eslintrc
 .github
+.idea
 .nvmrc
-tsconfig.json
-esbuild.config.js
-wait-and-watch.js
-coverage/
 Sources/
+coverage/
+esbuild.config.js
+jest.config.json
+tsconfig.json
+wait-and-watch.js
 ```
