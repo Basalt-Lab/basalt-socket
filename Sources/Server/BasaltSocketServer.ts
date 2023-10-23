@@ -1,18 +1,23 @@
 import { App, TemplatedApp, us_listen_socket, WebSocketBehavior } from 'uWebSockets.js';
 
 import {
+    IBasaltHttpRequest,
+    IBasaltHttpResponse,
     IBasaltSocketServer,
     IBasaltSocketServerOptions,
-    IBasaltUserData,
     IBasaltWebSocket,
     IBasaltWebSocketBehavior
 } from '@/Interfaces';
 
 export class BasaltSocketServer implements IBasaltSocketServer {
     private readonly _app: TemplatedApp;
-    private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void) | undefined;
+    private readonly _protocol: string | undefined;
+    private readonly _maxPayloadLength: number | undefined;
+    private readonly _handshakeTimeout: number | undefined;
+    private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
     private _onConnectedHook: ((ws: IBasaltWebSocket) => void) | undefined;
     private _onDisconnectHook: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void) | undefined;
+    private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
     private _routes: string[] = [];
 
     /**
@@ -22,14 +27,17 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      */
     public constructor(option: IBasaltSocketServerOptions = {}) {
         this._app = App(option);
+        this._protocol = option.protocol;
+        this._maxPayloadLength = option.maxPayloadLength;
+        this._handshakeTimeout = option.handshakeTimeout;
     }
 
     /**
-     * Lifecycle onReceivedHook : Called when a client send a message
-     * @param hooks callback to call when a client send a message
+     * Lifecycle onUpgradeHook : Called when a client upgrade
+     * @param hooks
      */
-    public set onReceivedHook(hooks: ((ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void)) {
-        this._onReceivedHook = hooks;
+    public set onUpgradeHook(hooks: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void)) {
+        this._onUpgradeHook = hooks;
     }
 
     /**
@@ -46,6 +54,14 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      */
     public set onDisconnectHook(hooks: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void)) {
         this._onDisconnectHook = hooks;
+    }
+
+    /**
+     * Lifecycle onReceivedHook : Called when a client send a message
+     * @param hooks callback to call when a client send a message
+     */
+    public set onReceivedHook(hooks: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void)) {
+        this._onReceivedHook = hooks;
     }
 
     /**
@@ -66,8 +82,10 @@ export class BasaltSocketServer implements IBasaltSocketServer {
         this._app.listen(port, (token: us_listen_socket | false): void => {
             if (!token)
                 throw new Error(`Failed to listen to port ${port}`);
+
             if (verbose)
                 console.log(`Listening to port ${port}`);
+
         });
     }
 
@@ -80,18 +98,21 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
     public use(prefix: string, events: Map<string, IBasaltWebSocketBehavior>): void {
-        if (!prefix.match(/^[a-zA-Z0-9_\-/]+$/))
+        if (!prefix.match(/^[a-zA-Z0-9-_]*$/))
             throw new Error(`Invalid prefix ${prefix} (only alphanumeric characters, - and _ are allowed)`);
+
         for (const [eventName] of events)
             if (this._routes.includes(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
 
+
         for (const [eventName, event] of events) {
-            const e: WebSocketBehavior<IBasaltUserData> = {
+            const e: WebSocketBehavior<unknown> = {
                 open: (ws: IBasaltWebSocket): void => {
                     this._onConnectedHook?.(ws);
                     if (event.onConnectHook)
                         event.onConnectHook(ws);
+
 
                 },
                 close: (ws: IBasaltWebSocket, code: number, message: ArrayBuffer): void => {
@@ -99,15 +120,62 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                     if (event.onDisconnectHook)
                         event.onDisconnectHook(ws, code, message);
 
+
                 },
-                message: (ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean): void => {
-                    this._onReceivedHook?.(ws, message, isBinary);
+                message: (ws: IBasaltWebSocket, message: ArrayBuffer): void => {
+                    this._onReceivedHook?.(ws, message);
+                    if (event.onReceivedHook)
+                        event.onReceivedHook(ws, message);
+
                     if (event.preHandler)
                         for (const preHandler of event.preHandler)
-                            preHandler(ws, message, isBinary);
+                            preHandler(ws, message);
+
                     if (event.handler)
-                        event.handler(ws, message, isBinary);
-                }
+                        event.handler(ws, message);
+
+                },
+                upgrade: (res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket): void => {
+                    const handshakeTimeout: number = event.handshakeTimeout ?? this._handshakeTimeout ?? 10000;
+
+                    const handshakeTimeoutId = setTimeout((): void => {
+                        res.close();
+                    }, handshakeTimeout);
+
+                    const upgradeAborted: { aborted: boolean } = { aborted: false };
+
+                    const secWebSocketKey: string = req.getHeader('sec-websocket-key');
+                    const secWebSocketProtocol: string = req.getHeader('sec-websocket-protocol');
+                    const secWebSocketExtensions: string = req.getHeader('sec-websocket-extensions');
+
+                    res.onAborted((): void => {
+                        upgradeAborted.aborted = true;
+                        clearTimeout(handshakeTimeoutId);
+                    });
+
+                    res.cork((): void => {
+                        if (upgradeAborted.aborted) return;
+
+                        let userData = {};
+                        if (this._onUpgradeHook)
+                            userData = this._onUpgradeHook?.(res, req) ?? {};
+
+                        if (event.onUpgradeHook)
+                            userData = { ...userData, ...(event.onUpgradeHook(res, req) ?? {}) };
+
+                        res.upgrade(
+                            userData,
+                            secWebSocketKey,
+                            event.protocol ?? this._protocol ?? secWebSocketProtocol,
+                            secWebSocketExtensions,
+                            context
+                        );
+
+                        clearTimeout(handshakeTimeoutId);
+                    });
+                },
+
+                maxPayloadLength: event.maxPayloadLength ?? this._maxPayloadLength ?? 16 * 1024
             };
 
             this._app.ws(`/${prefix}${eventName}`, e);

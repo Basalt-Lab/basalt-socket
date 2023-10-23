@@ -5,9 +5,26 @@ import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 export interface IBasaltWebSocketBehavior {
 
     /**
-     * Max payload length
+     * Protocol
+     */
+    protocol?: string;
+
+    /**
+     * Max payload length (default: 16 * 1024)
      */
     maxPayloadLength?: number;
+
+    /**
+     * Handshake timeout (default: 10000)
+     */
+    handshakeTimeout?: number;
+
+    /**
+     * Lifecycle onUpgradeHook: Called when a client connect
+     * @param res
+     * @param req
+     */
+    onUpgradeHook?: (res: HttpResponse, req: HttpRequest) => unknown | void;
 
     /**
      * Lifecycle onConnectHook: Called when a client connect
@@ -27,30 +44,20 @@ export interface IBasaltWebSocketBehavior {
      * Lifecycle onReceivedHook: Called when a client send a message
      * @param ws WebSocket
      * @param message Message received
-     * @param isBinary Is the message binary
      */
-    onReceivedHook?: (ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void;
+    onReceivedHook?: (ws: IBasaltWebSocket, message: ArrayBuffer) => void;
 
     /**
      * Handler: Called when a client send a message
      * @param ws WebSocket
      * @param message Message received
-     * @param isBinary Is the message binary
      */
-    handler?: (ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void;
+    handler?: (ws: IBasaltWebSocket, message: ArrayBuffer) => void;
 
     /**
      * PreHandler: Called before the handler
      * @param ws WebSocket
      * @param message Message received
-     * @param isBinary Is the message binary
      */
-    preHandler?: Array<(ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void>;
-
-    /**
-     * Upgrade: Called when a client try to upgrade
-     * @param res
-     * @param req
-     */
-    upgrade?: (res: HttpResponse, req: HttpRequest) => void;
+    preHandler?: Array<(ws: IBasaltWebSocket, message: ArrayBuffer) => void>;
 }
