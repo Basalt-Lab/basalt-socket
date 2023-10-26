@@ -1,3 +1,3 @@
 export * from './BasaltConnectionManager';
-export * from './BasaltSocketGateway';
+export * from './BasaltSocketClient';
 export * from './BasaltEventListenerManager';

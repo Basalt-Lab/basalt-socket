@@ -105,7 +105,6 @@ export class BasaltSocketServer implements IBasaltSocketServer {
             if (this._routes.includes(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
 
-
         for (const [eventName, event] of events) {
             const e: WebSocketBehavior<unknown> = {
                 open: (ws: IBasaltWebSocket): void => {
@@ -143,7 +142,6 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                     }, handshakeTimeout);
 
                     const upgradeAborted: { aborted: boolean } = { aborted: false };
-
                     const secWebSocketKey: string = req.getHeader('sec-websocket-key');
                     const secWebSocketProtocol: string = req.getHeader('sec-websocket-protocol');
                     const secWebSocketExtensions: string = req.getHeader('sec-websocket-extensions');
@@ -155,7 +153,6 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
                     res.cork((): void => {
                         if (upgradeAborted.aborted) return;
-
                         let userData = {};
                         if (this._onUpgradeHook)
                             userData = this._onUpgradeHook?.(res, req) ?? {};

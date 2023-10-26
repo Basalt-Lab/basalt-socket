@@ -1,19 +1,19 @@
 import { WebSocket } from 'ws';
 import { TextEncoder } from 'util';
 
-import { IBasaltSocketGatewayOptions, IBasaltConnectionManager } from '@/Interfaces';
+import { IBasaltSocketClientOptions, IBasaltConnectionManager } from '@/Interfaces';
 
 export class BasaltConnectionManager implements IBasaltConnectionManager {
     private _socket: WebSocket | undefined;
-    private readonly _options: IBasaltSocketGatewayOptions | undefined;
+    private readonly _options: IBasaltSocketClientOptions | undefined;
     private readonly _url: string;
 
     /**
      * Creates an instance of BasaltConnectionManager.
      * @param {string} url - The URL of the WebSocket server.
-     * @param {IBasaltSocketGatewayOptions} [options] - Configurable options for the connection manager.
+     * @param {IBasaltSocketClientOptions} [options] - Configurable options for the connection manager.
      */
-    constructor(url: string, options?: IBasaltSocketGatewayOptions) {
+    constructor(url: string, options?: IBasaltSocketClientOptions) {
         this._options = options;
         this._url = url;
     }
@@ -65,7 +65,6 @@ export class BasaltConnectionManager implements IBasaltConnectionManager {
                 throw new Error(`Socket reconnect error: ${error.message}`);
             else
                 throw new Error(`Socket reconnect error: ${error}`);
-
         }
     }
 
@@ -94,7 +93,6 @@ export class BasaltConnectionManager implements IBasaltConnectionManager {
         } else if (message instanceof ArrayBuffer) {
             return message;
         }
-
         throw new Error('Message is not a string, ArrayBuffer, or object');
     }
 

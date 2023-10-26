@@ -1,4 +1,4 @@
-export interface IBasaltSocketGatewayOptions {
+export interface IBasaltSocketClientOptions {
     protocol?: string;
     maxPayloadLength?: number;
     handshakeTimeout?: number;

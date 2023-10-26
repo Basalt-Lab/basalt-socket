@@ -1,20 +1,20 @@
 import { WebSocket } from 'ws';
 
-import { IBasaltConnectionManager, IBasaltSocketGateway, IBasaltSocketGatewayOptions, IBasaltEventListenerManager } from '@/Interfaces';
-import { BasaltConnectionManager, BasaltEventListenerManager } from '@/Gateway';
-import { EventListenerCallback } from '@/Gateway/BasaltEventListenerManager';
+import { IBasaltConnectionManager, IBasaltSocketClient, IBasaltSocketClientOptions, IBasaltEventListenerManager } from '@/Interfaces';
+import { BasaltConnectionManager, BasaltEventListenerManager } from '@/Client';
+import { EventListenerCallback } from '@/Client/BasaltEventListenerManager';
 
 
-export class BasaltSocketGateway implements IBasaltSocketGateway {
+export class BasaltSocketClient implements IBasaltSocketClient {
     private _connectionManager: IBasaltConnectionManager;
     private _eventListenerManager: IBasaltEventListenerManager | undefined;
 
     /**
-     * Creates a new instance of the BasaltSocketGateway class.
+     * Creates a new instance of the BasaltSocketClient class.
      * @param url - The URL of the WebSocket server.
      * @param options - The options for the WebSocket connection.
      */
-    constructor(url: string, options?: IBasaltSocketGatewayOptions) {
+    constructor(url: string, options?: IBasaltSocketClientOptions) {
         this._connectionManager = new BasaltConnectionManager(url, options);
     }
 
