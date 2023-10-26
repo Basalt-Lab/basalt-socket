@@ -39,5 +39,11 @@
     "ts-jest": "^29.1.1",
     "tsc-alias": "^1.8.8",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/ws": "^8.5.8",
+    "fast-json-stringify": "^5.8.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.32.0",
+    "ws": "^8.14.2"
   }
 }
