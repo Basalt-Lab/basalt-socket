@@ -93,7 +93,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * Use a prefix for all events
      * @param prefix prefix to use
      * @param events events to use
-     * @example use('user/', new Map([['login', { open: (ws: IBasaltWebSocket) => { ... } }]]))
+     * @example use('user', new Map([['login', { open: (ws: IBasaltWebSocket) => { ... } }]]))
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
@@ -175,8 +175,8 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                 maxPayloadLength: event.maxPayloadLength ?? this._maxPayloadLength ?? 16 * 1024
             };
 
-            this._app.ws(`/${prefix}${eventName}`, e);
-            this._routes.push(`/${prefix}${eventName}`);
+            this._app.ws(`/${prefix}/${eventName}`, e);
+            this._routes.push(`/${prefix}/${eventName}`);
         }
     }
 }
