@@ -81,10 +81,10 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     public listen(port: number, verbose: boolean = true): void {
         this._app.listen(port, (token: us_listen_socket | false): void => {
             if (!token)
-                throw new Error(`Failed to listen to port ${port}`);
+                throw new Error(`BasaltSocketServer : failed to listen to port ${port}`);
 
             if (verbose)
-                console.log(`Listening to port ${port}`);
+                console.log(`BasaltSocketServer : listening to port ${port}`);
 
         });
     }
