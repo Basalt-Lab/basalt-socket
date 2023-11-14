@@ -18,7 +18,7 @@
 
 ## 🌟 Features
 
-You can find the list of features in the [documentation](https://basalt-doc.github.io/).
+You can find the list of features in the [documentation](https://basalt-lab.github.io/basalt-doc/index.html).
 
 ## 🔧 Installation
 

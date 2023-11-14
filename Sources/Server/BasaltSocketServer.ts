@@ -81,10 +81,10 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     public listen(port: number, verbose: boolean = true): void {
         this._app.listen(port, (token: us_listen_socket | false): void => {
             if (!token)
-                throw new Error(`Failed to listen to port ${port}`);
+                throw new Error(`BasaltSocketServer : failed to listen to port ${port}`);
 
             if (verbose)
-                console.log(`Listening to port ${port}`);
+                console.log(`BasaltSocketServer : listening to port ${port}`);
 
         });
     }
@@ -93,13 +93,13 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * Use a prefix for all events
      * @param prefix prefix to use
      * @param events events to use
-     * @example use('user', new Map([['login', { open: (ws: IBasaltWebSocket) => { ... } }]]))
+     * @example use('user/', new Map([['login', { open: (ws: IBasaltWebSocket) => { ... } }]]))
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
     public use(prefix: string, events: Map<string, IBasaltWebSocketBehavior>): void {
-        if (!prefix.match(/^[a-zA-Z0-9-_]*$/))
-            throw new Error(`Invalid prefix ${prefix} (only alphanumeric characters, - and _ are allowed)`);
+        if (!prefix.match(/^[a-zA-Z0-9-_/]*$/) && prefix !== '')
+            throw new Error(`Invalid prefix ${prefix} (only alphanumeric characters, -, / and _ are allowed)`);
 
         for (const [eventName] of events)
             if (this._routes.includes(`/${prefix}${eventName}`))
@@ -171,12 +171,16 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                         clearTimeout(handshakeTimeoutId);
                     });
                 },
-
                 maxPayloadLength: event.maxPayloadLength ?? this._maxPayloadLength ?? 16 * 1024
             };
 
-            this._app.ws(`/${prefix}/${eventName}`, e);
-            this._routes.push(`/${prefix}/${eventName}`);
+            if (prefix === '') {
+                this._app.ws(`/${eventName}`, e);
+                this._routes.push(`/${eventName}`);
+            } else {
+                this._app.ws(`/${prefix}${eventName}`, e);
+                this._routes.push(`/${prefix}${eventName}`);
+            }
         }
     }
 }

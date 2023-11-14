@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.5.8",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.33.0",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0",
     "ws": "^8.14.2"
   }
 }
