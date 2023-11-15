@@ -1,0 +1,54 @@
+{
+  "name": "@basalt-lab/basalt-socket",
+  "version": "1.0.0",
+  "description": "Socket module for Basalt Framework",
+  "main": "Build/App.js",
+  "types": "Build/App.d.ts",
+  "scripts": {
+    "lint": "eslint . --ext .ts",
+    "fix-lint": "eslint --fix . --ext .ts",
+    "test": "jest -c jest.config.json --coverage",
+    "test:watch": "jest --watch -c jest.config.json",
+    "check-types": "tsc --noEmit",
+    "create-types": "tsc --emitDeclarationOnly && tsc-alias",
+    "dev": "ESBUILD_ENV=dev node esbuild.config.js & node wait-and-watch.js",
+    "build::pkg": "npm run check-types && npm run create-types && ESBUILD_ENV=prod node esbuild.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Basalt-Lab/basalt-socket.git"
+  },
+  "keywords": [
+    "basalt-socket",
+    "basalt",
+    "socket",
+    "server",
+    "socket-server",
+    "client",
+    "socket-client"
+  ],
+  "author": "Ruby",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Basalt-Lab/basalt-socket/issues"
+  },
+  "homepage": "https://github.com/Basalt-Lab/basalt-socket#readme",
+  "devDependencies": {
+    "@types/jest": "^29.5.5",
+    "@types/node": "^20.8.4",
+    "@typescript-eslint/eslint-plugin": "^6.7.4",
+    "@typescript-eslint/parser": "^6.7.4",
+    "esbuild": "^0.19.4",
+    "esbuild-plugin-alias": "^0.2.1",
+    "eslint": "^8.50.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "tsc-alias": "^1.8.8",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/ws": "^8.5.8",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0",
+    "ws": "^8.14.2"
+  }
+}

@@ -1,0 +1,11 @@
+.eslintrc
+.github
+.idea
+.nvmrc
+Sources/
+coverage/
+esbuild.config.js
+jest.config.json
+tsconfig.json
+wait-and-watch.js
+```
