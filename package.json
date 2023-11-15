@@ -19,7 +19,13 @@
     "url": "git+https://github.com/Basalt-Lab/basalt-socket.git"
   },
   "keywords": [
-    "basalt-auth"
+    "basalt-socket",
+    "basalt",
+    "socket",
+    "server",
+    "socket-server",
+    "client",
+    "socket-client"
   ],
   "author": "Ruby",
   "license": "MIT",
