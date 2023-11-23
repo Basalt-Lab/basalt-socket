@@ -44,4 +44,4 @@ Distributed under the MIT License. See LICENSE for more information.
 
 Mail - [basalt-lab@proton.me](basalt-lab@proton.me)
 
-[Project link](https://github.com/Basalt-Lab/basalt-authorization)
+[Project link](https://github.com/Basalt-Lab/basalt-socket)

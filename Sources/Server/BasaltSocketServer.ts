@@ -1,4 +1,11 @@
-import { App, TemplatedApp, us_listen_socket, WebSocketBehavior } from 'uWebSockets.js';
+import {
+    App,
+    TemplatedApp,
+    us_listen_socket,
+    WebSocketBehavior,
+    us_listen_socket_close,
+    RecognizedString
+} from 'uWebSockets.js';
 
 import {
     IBasaltHttpRequest,
@@ -6,18 +13,17 @@ import {
     IBasaltSocketServer,
     IBasaltSocketServerOptions,
     IBasaltWebSocket,
-    IBasaltWebSocketBehavior
+    IBasaltWebSocketEvent
 } from '@/Interfaces';
 
 export class BasaltSocketServer implements IBasaltSocketServer {
     private readonly _app: TemplatedApp;
-    private readonly _protocol: string | undefined;
-    private readonly _maxPayloadLength: number | undefined;
-    private readonly _handshakeTimeout: number | undefined;
-    private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
+    private _basaltServerOption: IBasaltSocketServerOptions;
     private _onConnectedHook: ((ws: IBasaltWebSocket) => void) | undefined;
     private _onDisconnectHook: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void) | undefined;
     private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
+    private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
+    private _listenToken: us_listen_socket | undefined;
     private _routes: string[] = [];
 
     /**
@@ -27,9 +33,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      */
     public constructor(option: IBasaltSocketServerOptions = {}) {
         this._app = App(option);
-        this._protocol = option.protocol;
-        this._maxPayloadLength = option.maxPayloadLength;
-        this._handshakeTimeout = option.handshakeTimeout;
+        this._basaltServerOption = option;
     }
 
     /**
@@ -82,11 +86,33 @@ export class BasaltSocketServer implements IBasaltSocketServer {
         this._app.listen(port, (token: us_listen_socket | false): void => {
             if (!token)
                 throw new Error(`BasaltSocketServer : failed to listen to port ${port}`);
-
+            this._listenToken = token;
             if (verbose)
                 console.log(`BasaltSocketServer : listening to port ${port}`);
 
         });
+    }
+
+    /**
+     * Stop the server
+     * @throws {Error} If the server is not listening
+     */
+    public stop(): void {
+        if (this._listenToken) {
+            us_listen_socket_close(this._listenToken);
+            this._listenToken = undefined;
+        } else {
+            throw new Error('BasaltSocketServer : server is not listening');
+        }
+    }
+
+    /**
+     * Publish a message to a topic
+     * @param topic channel to publish to
+     * @param message message to publish
+     */
+    public publish(topic: RecognizedString, message: RecognizedString): void {
+        this._app.publish(topic, message, undefined, undefined);
     }
 
     /**
@@ -97,7 +123,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
-    public use(prefix: string, events: Map<string, IBasaltWebSocketBehavior>): void {
+    public use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void {
         if (!prefix.match(/^[a-zA-Z0-9-_/]*$/) && prefix !== '')
             throw new Error(`Invalid prefix ${prefix} (only alphanumeric characters, -, / and _ are allowed)`);
 
@@ -135,7 +161,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
                 },
                 upgrade: (res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket): void => {
-                    const handshakeTimeout: number = event.handshakeTimeout ?? this._handshakeTimeout ?? 10000;
+                    const handshakeTimeout: number = event.handshakeTimeout ?? this._basaltServerOption.handshakeTimeout ?? 10000;
 
                     const handshakeTimeoutId = setTimeout((): void => {
                         res.close();
@@ -163,21 +189,22 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                         res.upgrade(
                             userData,
                             secWebSocketKey,
-                            event.protocol ?? this._protocol ?? secWebSocketProtocol,
+                            event.protocol ?? this._basaltServerOption.protocol ?? secWebSocketProtocol,
                             secWebSocketExtensions,
                             context
                         );
-
                         clearTimeout(handshakeTimeoutId);
                     });
                 },
-                maxPayloadLength: event.maxPayloadLength ?? this._maxPayloadLength ?? 16 * 1024
+                maxPayloadLength: event.maxPayloadLength ?? this._basaltServerOption.maxPayloadLength ?? 16 * 1024
             };
 
             if (prefix === '') {
                 this._app.ws(`/${eventName}`, e);
                 this._routes.push(`/${eventName}`);
             } else {
+                if (prefix[0] === '/')
+                    prefix = prefix.substring(1);
                 this._app.ws(`/${prefix}${eventName}`, e);
                 this._routes.push(`/${prefix}${eventName}`);
             }
