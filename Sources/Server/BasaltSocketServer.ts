@@ -203,6 +203,8 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                 this._app.ws(`/${eventName}`, e);
                 this._routes.push(`/${eventName}`);
             } else {
+                if (prefix[0] === '/')
+                    prefix = prefix.substring(1);
                 this._app.ws(`/${prefix}${eventName}`, e);
                 this._routes.push(`/${prefix}${eventName}`);
             }
