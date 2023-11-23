@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.0.0...v1.1.0) (2023-11-23)
+
+
+### Features
+
+* add close, publish method and change name ([501dd68](https://github.com/Basalt-Lab/basalt-socket/commit/501dd681c480924cb5c45ba57f72b77944f741b1))
+
+
+### Bug Fixes
+
+* correction prefix ([75b8cdb](https://github.com/Basalt-Lab/basalt-socket/commit/75b8cdb1dce5cb71edca9b1538f513a98027e5fa))
+
 ## 1.0.0 (2023-11-15)
 
 
