@@ -1,4 +1,4 @@
-import { IBasaltWebSocketBehavior } from '@/Interfaces';
+import { IBasaltWebSocketEvent } from '@/Interfaces';
 
 export interface IBasaltSocketEvents {
     /**
@@ -8,11 +8,11 @@ export interface IBasaltSocketEvents {
      * @example add('login', { open: (ws: IBasaltWebSocket) => { ... } })
      * @throws {Error} If an event listener for the event already exists.
      */
-    add(name: string, event: IBasaltWebSocketBehavior): void
+    add(name: string, event: IBasaltWebSocketEvent): void
 
     /**
      * Getter for events
-     * @returns {Map<string, IBasaltWebSocketBehavior>} events
+     * @returns {Map<string, IBasaltWebSocketEvent>} events
      */
-    get events(): Map<string, IBasaltWebSocketBehavior>
+    get events(): Map<string, IBasaltWebSocketEvent>
 }
