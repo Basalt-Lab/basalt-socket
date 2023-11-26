@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.1.0...v1.2.0) (2023-11-26)
+
+
+### Features
+
+* Add possibility to have CORS + global improvements ([58173b5](https://github.com/Basalt-Lab/basalt-socket/commit/58173b57ebbe082386ba3309317ec393984a1fc5))
+
+
+### Bug Fixes
+
+* correction of response overflow + clean _basaltServerOption ([a08bff5](https://github.com/Basalt-Lab/basalt-socket/commit/a08bff567f5277a742d0ad7ad9c1d831e9c702df))
+* Correction when we have no origin do not set up the CORS ([c6a2781](https://github.com/Basalt-Lab/basalt-socket/commit/c6a27814b0899efb31588bab409aa30718037f49))
+
+
+### Build System
+
+* update package-lock ([fde7814](https://github.com/Basalt-Lab/basalt-socket/commit/fde7814bba137a741515d51bd6f81b986224db71))
+
+
+### Miscellaneous Chores
+
+* add npm ignore Tests/ folder ([d4df6a9](https://github.com/Basalt-Lab/basalt-socket/commit/d4df6a915df484233be3c90df0843d69eaf4fe75))
+
 ## [1.1.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.0.0...v1.1.0) (2023-11-23)
 
 
