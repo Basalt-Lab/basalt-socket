@@ -221,7 +221,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
             clearTimeout(handshakeTimeoutId);
         });
 
-        if (!this.isOriginAllowed(origin)) {
+        if (!this.isOriginAllowed(origin) && this._options.origins != undefined && this._options.origins.length > 0) {
             res.writeStatus('401 Unauthorized').writeHeader('Basalt-Socket-Error', 'Origin not allowed').end();
             isUpgradedOrAborted = true;
             return;
