@@ -3,6 +3,7 @@
 .idea
 .nvmrc
 Sources/
+Tests/
 coverage/
 esbuild.config.js
 jest.config.json
