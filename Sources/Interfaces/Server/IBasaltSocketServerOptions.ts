@@ -12,7 +12,12 @@ export interface IBasaltSocketServerOptions extends AppOptions {
     maxPayloadLength?: number;
 
     /**
-     * Handshake timeout (default: 10000)
+     * Handshake timeout (default: 10000 ms)
      */
     handshakeTimeout?: number;
+
+    /**
+     * Origins is an array of strings that will be matched against the Origin header. If none of the strings match, the upgrade is rejected.
+     */
+    origins?: string[];
 }

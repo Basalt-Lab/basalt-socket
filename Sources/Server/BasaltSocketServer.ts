@@ -16,74 +16,78 @@ import {
     IBasaltWebSocketEvent
 } from '@/Interfaces';
 
+/**
+ * Represents a WebSocket server using µWebSockets.js.
+ * This server supports various lifecycle hooks and can publish messages to topics.
+ */
 export class BasaltSocketServer implements IBasaltSocketServer {
     private readonly _app: TemplatedApp;
-    private readonly _basaltServerOption: IBasaltSocketServerOptions;
+    private readonly _options: IBasaltSocketServerOptions;
     private _onConnectedHook: ((ws: IBasaltWebSocket) => void) | undefined;
     private _onDisconnectHook: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void) | undefined;
     private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
     private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
     private _listenToken: us_listen_socket | undefined;
-    private _routes: string[] = [];
+    private _routes: Set<string> = new Set();
 
     /**
-     * Constructor BasaltSocketServer
-     * @param option uWebSockets.js AppOptions
-     * @see https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
+     * Constructs a new BasaltSocketServer instance with specified options.
+     * @param option Configuration options for the µWebSockets.js App.
      */
     public constructor(option: IBasaltSocketServerOptions = {
         maxPayloadLength: 16 * 1024,
         handshakeTimeout: 10000,
+        origins: []
     }) {
         this._app = App(option);
-        this._basaltServerOption = option;
+        this._options = option;
     }
 
     /**
-     * Lifecycle onUpgradeHook : Called when a client upgrade
-     * @param hooks
+     * Sets a hook that is called when a client initiates an upgrade request.
+     * @param hooks The function to call on an upgrade event.
      */
     public set onUpgradeHook(hooks: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void)) {
         this._onUpgradeHook = hooks;
     }
 
     /**
-     * Lifecycle onConnectHook : Called when a client connect
-     * @param hooks callback to call when a client connect
+     * Sets a hook that is called when a client establishes a connection.
+     * @param hooks The function to call on a connection event.
      */
     public set onConnectHook(hooks: ((ws: IBasaltWebSocket) => void)) {
         this._onConnectedHook = hooks;
     }
 
     /**
-     * Lifecycle onDisconnectHook : Called when a client disconnect
-     * @param hooks callback to call when a client disconnect
+     * Sets a hook that is called when a client disconnects.
+     * @param hooks The function to call on a disconnection event.
      */
     public set onDisconnectHook(hooks: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void)) {
         this._onDisconnectHook = hooks;
     }
 
     /**
-     * Lifecycle onReceivedHook : Called when a client send a message
-     * @param hooks callback to call when a client send a message
+     * Sets a hook that is called when a message is received from a client.
+     * @param hooks The function to call on a message event.
      */
     public set onReceivedHook(hooks: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void)) {
         this._onReceivedHook = hooks;
     }
 
     /**
-     * Getter for routes
-     * @returns {string[]} routes
+     * Gets the registered routes of the WebSocket server.
+     * @returns An array of registered route strings.
      */
     public get routes(): string[] {
-        return this._routes;
+        return [...this._routes];
     }
 
     /**
-     * Server listen to port
-     * @param port Port to listen to
-     * @param verbose Log to console if the server is listening (default: true)
-     * @throws {Error} If the server failed to listen to the port
+     * Starts listening on the specified port.
+     * @param port The port number to listen on.
+     * @param verbose Whether to log listening status to the console.
+     * @throws {Error} If the server fails to start listening on the port.
      */
     public listen(port: number, verbose: boolean = true): void {
         this._app.listen(port, (token: us_listen_socket | false): void => {
@@ -92,13 +96,12 @@ export class BasaltSocketServer implements IBasaltSocketServer {
             this._listenToken = token;
             if (verbose)
                 console.log(`BasaltSocketServer : listening to port ${port}`);
-
         });
     }
 
     /**
-     * Stop the server
-     * @throws {Error} If the server is not listening
+     * Stops the server from listening.
+     * @throws {Error} If the server is not currently listening.
      */
     public stop(): void {
         if (this._listenToken) {
@@ -110,107 +113,160 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     }
 
     /**
-     * Publish a message to a topic
-     * @param topic channel to publish to
-     * @param message message to publish
+     * Publishes a message to a specific topic.
+     * @param topic The topic to which the message should be published.
+     * @param message The message to publish.
      */
     public publish(topic: RecognizedString, message: RecognizedString): void {
         this._app.publish(topic, message, undefined, undefined);
     }
 
     /**
-     * Use a prefix for all events
-     * @param prefix prefix to use
-     * @param events events to use
-     * @example use('user/', new Map([['login', { open: (ws: IBasaltWebSocket) => { ... } }]]))
+     * Checks if the given origin is allowed by the server's configuration.
+     * @param origin The origin to check.
+     * @returns {boolean} True if the origin is allowed; false otherwise.
+     * @private
+     */
+    private isOriginAllowed(origin: string): boolean {
+        return this._options.origins !== undefined &&
+            this._options.origins.includes(origin);
+    }
+
+    /**
+     * Creates WebSocket behavior configurations for a given event.
+     * @param event The event configuration to be used for creating WebSocket behavior.
+     * @returns A WebSocketBehavior object with configured callbacks.
+     * @private
+     */
+    private createBehavior(event: IBasaltWebSocketEvent): WebSocketBehavior<unknown> {
+        return {
+            open: (ws: IBasaltWebSocket) => this.handleOpen(ws, event),
+            close: (ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => this.handleClose(ws, code, message, event),
+            message: (ws: IBasaltWebSocket, message: ArrayBuffer) => this.handleMessage(ws, message, event),
+            upgrade: (res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket) => this.handleUpgrade(res, req, context, event),
+            maxPayloadLength: event.maxPayloadLength ?? this._options.maxPayloadLength
+        };
+    }
+
+    /**
+     * Handles the opening of a WebSocket connection.
+     * @param ws The WebSocket instance.
+     * @param event The event configuration associated with this WebSocket.
+     * @private
+     */
+    private handleOpen(ws: IBasaltWebSocket, event: IBasaltWebSocketEvent): void {
+        this._onConnectedHook?.(ws);
+        if (event.onConnectHook)
+            event.onConnectHook(ws);
+    }
+
+    /**
+     * Handles the closing of a WebSocket connection.
+     * @param ws The WebSocket instance.
+     * @param code The status code representing why the connection is being closed.
+     * @param message The message or reason for the connection closure.
+     * @param event The event configuration associated with this WebSocket.
+     * @private
+     */
+    private handleClose(ws: IBasaltWebSocket, code: number, message: ArrayBuffer, event: IBasaltWebSocketEvent): void {
+        this._onDisconnectHook?.(ws, code, message);
+        if (event.onDisconnectHook)
+            event.onDisconnectHook(ws, code, message);
+    }
+
+    /**
+     * Handles the reception of a message from a WebSocket connection.
+     * @param ws The WebSocket instance.
+     * @param message The message received from the WebSocket.
+     * @param event The event configuration associated with this WebSocket.
+     * @private
+     */
+    private handleMessage(ws: IBasaltWebSocket, message: ArrayBuffer, event: IBasaltWebSocketEvent): void {
+        this._onReceivedHook?.(ws, message);
+        if (event.onReceivedHook)
+            event.onReceivedHook(ws, message);
+        if (event.preHandler)
+            for (const preHandler of event.preHandler)
+                preHandler(ws, message);
+        if (event.handler)
+            event.handler(ws, message);
+    }
+
+    /**
+     * Handles the upgrade of a connection to WebSocket.
+     * @param res The HTTP response object for handling the upgrade.
+     * @param req The HTTP request object initiating the upgrade.
+     * @param context The listening socket context.
+     * @param event The event configuration associated with this upgrade.
+     * @private
+     */
+    private handleUpgrade(res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket, event: IBasaltWebSocketEvent): void {
+        const handshakeTimeout: number = event.handshakeTimeout ?? this._options.handshakeTimeout as number;
+        let isUpgradedOrAborted: boolean = false;
+
+        const secWebSocketKey: string = req.getHeader('sec-websocket-key');
+        const secWebSocketProtocol: string = req.getHeader('sec-websocket-protocol');
+        const secWebSocketExtensions: string = req.getHeader('sec-websocket-extensions');
+        const origin: string = req.getHeader('origin') || req.getHeader('sec-websocket-origin');
+
+        const handshakeTimeoutId = setTimeout((): void => {
+            if (!isUpgradedOrAborted) {
+                res.close();
+                isUpgradedOrAborted = true;
+            }
+        }, handshakeTimeout);
+
+        res.onAborted((): void => {
+            isUpgradedOrAborted = true;
+            clearTimeout(handshakeTimeoutId);
+        });
+
+        if (!this.isOriginAllowed(origin)) {
+            res.writeStatus('401 Unauthorized').writeHeader('Basalt-Socket-Error', 'Origin not allowed').end();
+            isUpgradedOrAborted = true;
+            return;
+        }
+
+        res.cork((): void => {
+            if (isUpgradedOrAborted) return;
+
+            let userData = this._onUpgradeHook ? this._onUpgradeHook(res, req) ?? {} : {};
+            if (event.onUpgradeHook)
+                userData = { ...userData, ...(event.onUpgradeHook(res, req) ?? {}) };
+
+            res.upgrade(userData, secWebSocketKey, event.protocol ?? this._options.protocol ?? secWebSocketProtocol, secWebSocketExtensions, context);
+            isUpgradedOrAborted = true;
+            clearTimeout(handshakeTimeoutId);
+        });
+    }
+
+    /**
+     * Configures event handling for specific routes with an optional prefix.
+     * Throws an error if a route is already registered or if the prefix is invalid.
+     * @param prefix The prefix to be used for all event routes.
+     * @param events A map of event names to their configurations.
      * @throws {Error} If an event listener for any of the events already exists.
-     * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
+     * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed).
+     * @public
      */
     public use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void {
-        if (!prefix.match(/^[a-zA-Z0-9-_/]*$/) && prefix !== '')
-            throw new Error(`Invalid prefix ${prefix} (only alphanumeric characters, -, / and _ are allowed)`);
-
-        for (const [eventName] of events)
-            if (this._routes.includes(`/${prefix}${eventName}`))
+        if (!/^[a-zA-Z0-9-_/]*$/.test(prefix)) throw new Error(`Invalid prefix ${prefix}`);
+        for (const eventName of events.keys())
+            if (this._routes.has(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
 
         for (const [eventName, event] of events) {
-            const e: WebSocketBehavior<unknown> = {
-                open: (ws: IBasaltWebSocket): void => {
-                    this._onConnectedHook?.(ws);
-                    if (event.onConnectHook)
-                        event.onConnectHook(ws);
-
-
-                },
-                close: (ws: IBasaltWebSocket, code: number, message: ArrayBuffer): void => {
-                    this._onDisconnectHook?.(ws, code, message);
-                    if (event.onDisconnectHook)
-                        event.onDisconnectHook(ws, code, message);
-
-
-                },
-                message: (ws: IBasaltWebSocket, message: ArrayBuffer): void => {
-                    this._onReceivedHook?.(ws, message);
-                    if (event.onReceivedHook)
-                        event.onReceivedHook(ws, message);
-
-                    if (event.preHandler)
-                        for (const preHandler of event.preHandler)
-                            preHandler(ws, message);
-
-                    if (event.handler)
-                        event.handler(ws, message);
-
-                },
-                upgrade: (res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket): void => {
-                    const handshakeTimeout: number = event.handshakeTimeout ?? this._basaltServerOption.handshakeTimeout as number;
-                    let upgradeAborted: boolean = false;
-                    let ended: boolean = false;
-
-                    const secWebSocketKey: string = req.getHeader('sec-websocket-key');
-                    const secWebSocketProtocol: string = req.getHeader('sec-websocket-protocol');
-                    const secWebSocketExtensions: string = req.getHeader('sec-websocket-extensions');
-
-                    const handshakeTimeoutId = setTimeout((): void => {
-                        if (!upgradeAborted && !ended)
-                            res.close();
-                    }, handshakeTimeout);
-                    res.onAborted((): void => {
-                        upgradeAborted = true;
-                        clearTimeout(handshakeTimeoutId);
-                    });
-
-                    res.cork((): void => {
-                        if (upgradeAborted) return;
-                        let userData = {};
-                        if (this._onUpgradeHook)
-                            userData = this._onUpgradeHook(res, req) ?? {};
-
-                        if (event.onUpgradeHook)
-                            userData = { ...userData, ...(event.onUpgradeHook(res, req) ?? {}) };
-                        res.upgrade(
-                            userData,
-                            secWebSocketKey,
-                            event.protocol ?? this._basaltServerOption.protocol ?? secWebSocketProtocol,
-                            secWebSocketExtensions,
-                            context
-                        );
-                        clearTimeout(handshakeTimeoutId);
-                    });
-                },
-
-                maxPayloadLength: event.maxPayloadLength ?? this._basaltServerOption.maxPayloadLength
-            };
-
+            const e: WebSocketBehavior<unknown> = this.createBehavior(event);
             if (prefix === '') {
                 this._app.ws(`/${eventName}`, e);
-                this._routes.push(`/${eventName}`);
+                this._routes.add(`/${eventName}`);
             } else {
-                if (prefix[0] === '/')
+                prefix = prefix.replace(/\/{2,}/g, '/');
+                if (prefix.startsWith('/'))
                     prefix = prefix.substring(1);
+                console.log(prefix);
                 this._app.ws(`/${prefix}${eventName}`, e);
-                this._routes.push(`/${prefix}${eventName}`);
+                this._routes.add(`/${prefix}${eventName}`);
             }
         }
     }
