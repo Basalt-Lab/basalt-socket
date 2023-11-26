@@ -18,7 +18,7 @@ import {
 
 export class BasaltSocketServer implements IBasaltSocketServer {
     private readonly _app: TemplatedApp;
-    private _basaltServerOption: IBasaltSocketServerOptions;
+    private readonly _basaltServerOption: IBasaltSocketServerOptions;
     private _onConnectedHook: ((ws: IBasaltWebSocket) => void) | undefined;
     private _onDisconnectHook: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void) | undefined;
     private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
@@ -31,7 +31,10 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @param option uWebSockets.js AppOptions
      * @see https://unetworking.github.io/uWebSockets.js/generated/interfaces/AppOptions.html
      */
-    public constructor(option: IBasaltSocketServerOptions = {}) {
+    public constructor(option: IBasaltSocketServerOptions = {
+        maxPayloadLength: 16 * 1024,
+        handshakeTimeout: 10000,
+    }) {
         this._app = App(option);
         this._basaltServerOption = option;
     }
@@ -161,31 +164,31 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
                 },
                 upgrade: (res: IBasaltHttpResponse, req: IBasaltHttpRequest, context: us_listen_socket): void => {
-                    const handshakeTimeout: number = event.handshakeTimeout ?? this._basaltServerOption.handshakeTimeout ?? 10000;
+                    const handshakeTimeout: number = event.handshakeTimeout ?? this._basaltServerOption.handshakeTimeout as number;
+                    let upgradeAborted: boolean = false;
+                    let ended: boolean = false;
 
-                    const handshakeTimeoutId = setTimeout((): void => {
-                        res.close();
-                    }, handshakeTimeout);
-
-                    const upgradeAborted: { aborted: boolean } = { aborted: false };
                     const secWebSocketKey: string = req.getHeader('sec-websocket-key');
                     const secWebSocketProtocol: string = req.getHeader('sec-websocket-protocol');
                     const secWebSocketExtensions: string = req.getHeader('sec-websocket-extensions');
 
+                    const handshakeTimeoutId = setTimeout((): void => {
+                        if (!upgradeAborted && !ended)
+                            res.close();
+                    }, handshakeTimeout);
                     res.onAborted((): void => {
-                        upgradeAborted.aborted = true;
+                        upgradeAborted = true;
                         clearTimeout(handshakeTimeoutId);
                     });
 
                     res.cork((): void => {
-                        if (upgradeAborted.aborted) return;
+                        if (upgradeAborted) return;
                         let userData = {};
                         if (this._onUpgradeHook)
-                            userData = this._onUpgradeHook?.(res, req) ?? {};
+                            userData = this._onUpgradeHook(res, req) ?? {};
 
                         if (event.onUpgradeHook)
                             userData = { ...userData, ...(event.onUpgradeHook(res, req) ?? {}) };
-
                         res.upgrade(
                             userData,
                             secWebSocketKey,
@@ -196,7 +199,8 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                         clearTimeout(handshakeTimeoutId);
                     });
                 },
-                maxPayloadLength: event.maxPayloadLength ?? this._basaltServerOption.maxPayloadLength ?? 16 * 1024
+
+                maxPayloadLength: event.maxPayloadLength ?? this._basaltServerOption.maxPayloadLength
             };
 
             if (prefix === '') {
