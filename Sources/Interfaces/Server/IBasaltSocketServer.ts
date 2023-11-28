@@ -1,4 +1,8 @@
-import { IBasaltSocketServerListenOptions, IBasaltWebSocket, IBasaltWebSocketEvent } from '@/Interfaces';
+import {
+    IBasaltSocketEvents,
+    IBasaltSocketServerListenOptions,
+    IBasaltWebSocket
+} from '@/Interfaces';
 
 export interface IBasaltSocketServer {
 
@@ -41,5 +45,5 @@ export interface IBasaltSocketServer {
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
-    use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void
+    use(prefix: string, events: IBasaltSocketEvents): void
 }

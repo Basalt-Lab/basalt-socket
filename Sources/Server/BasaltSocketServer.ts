@@ -14,7 +14,8 @@ import {
     IBasaltSocketServerOptions,
     IBasaltWebSocket,
     IBasaltWebSocketEvent,
-    IBasaltSocketServerListenOptions
+    IBasaltSocketServerListenOptions,
+    IBasaltSocketEvents
 } from '@/Interfaces';
 
 /**
@@ -249,13 +250,13 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed).
      * @public
      */
-    public use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void {
+    public use(prefix: string, events: IBasaltSocketEvents): void {
+        const eventMap: Map<string, IBasaltWebSocketEvent> = events.events;
         if (!/^[a-zA-Z0-9-_/]*$/.test(prefix)) throw new Error(`Invalid prefix ${prefix}`);
-        for (const eventName of events.keys())
+        for (const eventName of eventMap.keys())
             if (this._routes.has(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
-
-        for (const [eventName, event] of events) {
+        for (const [eventName, event] of eventMap) {
             const e: WebSocketBehavior<unknown> = this.createBehavior(event);
             if (prefix === '') {
                 this._app.ws(`/${eventName}`, e);
