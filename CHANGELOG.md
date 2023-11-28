@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.2.0...v1.3.0) (2023-11-28)
+
+
+### Features
+
+* add ListenOptions and add Hostname property ([b245d8b](https://github.com/Basalt-Lab/basalt-socket/commit/b245d8b0cee2f7ad5fb6aec08820cebb4b983f39))
+* use can be take multiple events ([e4ab852](https://github.com/Basalt-Lab/basalt-socket/commit/e4ab852abc202516ede37aa107c932a81ddfc0a8))
+
+
+### Code Refactoring
+
+* simplify use ([f90719c](https://github.com/Basalt-Lab/basalt-socket/commit/f90719cfefe1a4b0f60a8b7aadda0e9593c14c16))
+
 ## [1.2.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.1.0...v1.2.0) (2023-11-26)
 
 
