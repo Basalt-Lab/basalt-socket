@@ -13,7 +13,9 @@ import {
     IBasaltSocketServer,
     IBasaltSocketServerOptions,
     IBasaltWebSocket,
-    IBasaltWebSocketEvent
+    IBasaltWebSocketEvent,
+    IBasaltSocketServerListenOptions,
+    IBasaltSocketEvents
 } from '@/Interfaces';
 
 /**
@@ -85,17 +87,16 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
     /**
      * Starts listening on the specified port.
-     * @param port The port number to listen on.
-     * @param verbose Whether to log listening status to the console.
      * @throws {Error} If the server fails to start listening on the port.
+     * @param options The options to use for listening. (port, host, verbose)
      */
-    public listen(port: number, verbose: boolean = true): void {
-        this._app.listen(port, (token: us_listen_socket | false): void => {
+    public listen(options: Partial<IBasaltSocketServerListenOptions>): void {
+        this._app.listen(options?.host ?? 'localhost', options?.port ?? 3000, (token: us_listen_socket | false): void => {
             if (!token)
-                throw new Error(`BasaltSocketServer : failed to listen to port ${port}`);
+                throw new Error(`BasaltSocketServer : failed to listen to port ${options?.port ?? 3000}`);
             this._listenToken = token;
-            if (verbose)
-                console.log(`BasaltSocketServer : listening to port ${port}`);
+            if (options.verbose ?? true)
+                console.log(`BasaltSocketServer : listening to port ${options?.port ?? 3000}`);
         });
     }
 
@@ -249,13 +250,20 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed).
      * @public
      */
-    public use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void {
+    public use(prefix: string, events: IBasaltSocketEvents | IBasaltSocketEvents[]): void {
+        if (!Array.isArray(events))
+            events = [events];
+
+        let eventMap: Map<string, IBasaltWebSocketEvent> = new Map();
+        for (const event of events)
+            eventMap = new Map([...eventMap, ...event.events]);
+
         if (!/^[a-zA-Z0-9-_/]*$/.test(prefix)) throw new Error(`Invalid prefix ${prefix}`);
-        for (const eventName of events.keys())
+        for (const eventName of eventMap.keys())
             if (this._routes.has(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
 
-        for (const [eventName, event] of events) {
+        for (const [eventName, event] of eventMap) {
             const e: WebSocketBehavior<unknown> = this.createBehavior(event);
             if (prefix === '') {
                 this._app.ws(`/${eventName}`, e);
@@ -264,7 +272,6 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                 prefix = prefix.replace(/\/{2,}/g, '/');
                 if (prefix.startsWith('/'))
                     prefix = prefix.substring(1);
-                console.log(prefix);
                 this._app.ws(`/${prefix}${eventName}`, e);
                 this._routes.add(`/${prefix}${eventName}`);
             }

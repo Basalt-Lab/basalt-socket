@@ -1,4 +1,8 @@
-import { IBasaltWebSocket, IBasaltWebSocketEvent } from '@/Interfaces';
+import {
+    IBasaltSocketEvents,
+    IBasaltSocketServerListenOptions,
+    IBasaltWebSocket
+} from '@/Interfaces';
 
 export interface IBasaltSocketServer {
 
@@ -27,12 +31,11 @@ export interface IBasaltSocketServer {
     get routes(): string[]
 
     /**
-     * Server listen to port
-     * @param port Port to listen to
-     * @param verbose Log to console if the server is listening (default: true)
-     * @throws {Error} If the server failed to listen to the port
+     * Starts listening on the specified port.
+     * @throws {Error} If the server fails to start listening on the port.
+     * @param options The options to use for listening. (port, host, verbose)
      */
-    listen(port: number, verbose: boolean): void
+    listen(options: Partial<IBasaltSocketServerListenOptions>): void
 
     /**
      * Use a prefix for all events
@@ -42,5 +45,5 @@ export interface IBasaltSocketServer {
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
-    use(prefix: string, events: Map<string, IBasaltWebSocketEvent>): void
+    use(prefix: string, events: IBasaltSocketEvents | IBasaltSocketEvents[]): void
 }
