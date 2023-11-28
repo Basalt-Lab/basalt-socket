@@ -250,12 +250,19 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed).
      * @public
      */
-    public use(prefix: string, events: IBasaltSocketEvents): void {
-        const eventMap: Map<string, IBasaltWebSocketEvent> = events.events;
+    public use(prefix: string, events: IBasaltSocketEvents | IBasaltSocketEvents[]): void {
+        if (!Array.isArray(events))
+            events = [events];
+
+        let eventMap: Map<string, IBasaltWebSocketEvent> = new Map();
+        for (const event of events)
+            eventMap = new Map([...eventMap, ...event.events]);
+
         if (!/^[a-zA-Z0-9-_/]*$/.test(prefix)) throw new Error(`Invalid prefix ${prefix}`);
         for (const eventName of eventMap.keys())
             if (this._routes.has(`/${prefix}${eventName}`))
                 throw new Error(`An event listener for ${prefix}${eventName} already exists.`);
+
         for (const [eventName, event] of eventMap) {
             const e: WebSocketBehavior<unknown> = this.createBehavior(event);
             if (prefix === '') {
@@ -265,7 +272,6 @@ export class BasaltSocketServer implements IBasaltSocketServer {
                 prefix = prefix.replace(/\/{2,}/g, '/');
                 if (prefix.startsWith('/'))
                     prefix = prefix.substring(1);
-                console.log(prefix);
                 this._app.ws(`/${prefix}${eventName}`, e);
                 this._routes.add(`/${prefix}${eventName}`);
             }
