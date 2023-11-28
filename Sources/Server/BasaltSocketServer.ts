@@ -13,7 +13,8 @@ import {
     IBasaltSocketServer,
     IBasaltSocketServerOptions,
     IBasaltWebSocket,
-    IBasaltWebSocketEvent
+    IBasaltWebSocketEvent,
+    IBasaltSocketServerListenOptions
 } from '@/Interfaces';
 
 /**
@@ -85,17 +86,16 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
     /**
      * Starts listening on the specified port.
-     * @param port The port number to listen on.
-     * @param verbose Whether to log listening status to the console.
      * @throws {Error} If the server fails to start listening on the port.
+     * @param options The options to use for listening. (port, host, verbose)
      */
-    public listen(port: number, verbose: boolean = true): void {
-        this._app.listen(port, (token: us_listen_socket | false): void => {
+    public listen(options: Partial<IBasaltSocketServerListenOptions>): void {
+        this._app.listen(options?.host ?? 'localhost', options?.port ?? 3000, (token: us_listen_socket | false): void => {
             if (!token)
-                throw new Error(`BasaltSocketServer : failed to listen to port ${port}`);
+                throw new Error(`BasaltSocketServer : failed to listen to port ${options?.port ?? 3000}`);
             this._listenToken = token;
-            if (verbose)
-                console.log(`BasaltSocketServer : listening to port ${port}`);
+            if (options.verbose ?? true)
+                console.log(`BasaltSocketServer : listening to port ${options?.port ?? 3000}`);
         });
     }
 
