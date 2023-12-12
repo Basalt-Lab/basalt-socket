@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.1](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.0...v1.3.1) (2023-12-12)
+
+
+### Code Refactoring
+
+* improvement JsDoc and folder structure ([3c5bad6](https://github.com/Basalt-Lab/basalt-socket/commit/3c5bad66a44b07a9ab9e60305dd3f5b2f7f9f99b))
+
+
+### Build System
+
+* update package versions ([ffd72f1](https://github.com/Basalt-Lab/basalt-socket/commit/ffd72f195b8e698b76da00660722576a3faa03ea))
+
+
+### Continuous Integration
+
+* update node version ([b0b1073](https://github.com/Basalt-Lab/basalt-socket/commit/b0b10733221ab793a2a89b447e1e029319a83964))
+
 ## [1.3.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.2.0...v1.3.0) (2023-11-28)
 
 
