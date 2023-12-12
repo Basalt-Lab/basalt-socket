@@ -1,3 +1,3 @@
 export * from '@/Interfaces';
-export * from '@/Server';
-export * from '@/Client';
+export * from '@/Core/Server';
+export * from '@/Core/Client';

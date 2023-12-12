@@ -1,6 +1,6 @@
+import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 
 import { IBasaltWebSocket } from '@/Interfaces';
-import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 
 export interface IBasaltWebSocketEvent {
 
