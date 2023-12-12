@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.1...v1.3.2) (2023-12-12)
+
+
+### Bug Fixes
+
+* change path import ([c58c04b](https://github.com/Basalt-Lab/basalt-socket/commit/c58c04b1661b64067141cded6106ec7c76000f8d))
+
 ## [1.3.1](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.0...v1.3.1) (2023-12-12)
 
 
