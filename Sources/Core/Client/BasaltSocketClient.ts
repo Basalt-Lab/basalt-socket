@@ -1,8 +1,8 @@
 import { WebSocket } from 'ws';
 
 import { IBasaltConnectionManager, IBasaltSocketClient, IBasaltSocketClientOptions, IBasaltEventListenerManager } from '@/Interfaces';
-import { BasaltConnectionManager, BasaltEventListenerManager } from '@/Client';
-import { EventListenerCallback } from '@/Client/BasaltEventListenerManager';
+import { BasaltConnectionManager, BasaltEventListenerManager } from '@/Core/Client';
+import { EventListenerCallback } from '@/Core/Client/BasaltEventListenerManager';
 
 
 export class BasaltSocketClient implements IBasaltSocketClient {
