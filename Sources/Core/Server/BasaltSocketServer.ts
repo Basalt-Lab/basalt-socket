@@ -34,15 +34,16 @@ export class BasaltSocketServer implements IBasaltSocketServer {
 
     /**
      * Constructs a new BasaltSocketServer instance with specified options.
-     * @param option Configuration options for the µWebSockets.js App.
+     * @param options Configuration options for the µWebSockets.js App.
      */
-    public constructor(option: IBasaltSocketServerOptions = {
+    public constructor(options: IBasaltSocketServerOptions = {
+
         maxPayloadLength: 16 * 1024,
         handshakeTimeout: 10000,
         origins: []
     }) {
-        this._app = App(option);
-        this._options = option;
+        this._app = App(options);
+        this._options = options;
     }
 
     /**

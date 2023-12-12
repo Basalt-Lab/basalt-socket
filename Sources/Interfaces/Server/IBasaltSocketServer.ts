@@ -1,4 +1,8 @@
+import { RecognizedString } from 'uWebSockets.js';
+
 import {
+    IBasaltHttpRequest,
+    IBasaltHttpResponse,
     IBasaltSocketEvents,
     IBasaltSocketServerListenOptions,
     IBasaltWebSocket
@@ -7,26 +11,32 @@ import {
 export interface IBasaltSocketServer {
 
     /**
-     * Lifecycle onReceivedHook : Called when a client send a message
-     * @param hooks callback to call when a client send a message
+     * Sets a hook that is called when a client initiates an upgrade request.
+     * @param hooks The function to call on an upgrade event.
      */
-    set onReceivedHook(hooks: ((ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void))
+    set onUpgradeHook(hooks: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void))
 
     /**
-     * Lifecycle onConnectHook : Called when a client connect
-     * @param hooks callback to call when a client connect
+     * Sets a hook that is called when a client establishes a connection.
+     * @param hooks The function to call on a connection event.
      */
     set onConnectHook(hooks: ((ws: IBasaltWebSocket) => void))
 
     /**
-     * Lifecycle onDisconnectHook : Called when a client disconnect
-     * @param hooks callback to call when a client disconnect
+     * Sets a hook that is called when a client disconnects.
+     * @param hooks The function to call on a disconnection event.
      */
     set onDisconnectHook(hooks: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void))
 
     /**
-     * Getter for routes
-     * @returns {string[]} routes
+     * Sets a hook that is called when a message is received from a client.
+     * @param hooks The function to call on a message event.
+     */
+    set onReceivedHook(hooks: ((ws: IBasaltWebSocket, message: ArrayBuffer, isBinary: boolean) => void))
+
+    /**
+     * Gets the registered routes of the WebSocket server.
+     * @returns An array of registered route strings.
      */
     get routes(): string[]
 
@@ -36,6 +46,19 @@ export interface IBasaltSocketServer {
      * @param options The options to use for listening. (port, host, verbose)
      */
     listen(options: Partial<IBasaltSocketServerListenOptions>): void
+
+    /**
+     * Stops the server from listening.
+     * @throws {Error} If the server is not currently listening.
+     */
+    stop(): void
+
+    /**
+     * Publishes a message to a specific topic.
+     * @param topic The topic to which the message should be published.
+     * @param message The message to publish.
+     */
+    publish(topic: RecognizedString, message: RecognizedString): void
 
     /**
      * Use a prefix for all events
