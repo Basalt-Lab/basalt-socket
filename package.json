@@ -47,8 +47,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@types/ws": "^8.5.8",
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.34.0",
-    "ws": "^8.14.2"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.38.0"
   }
 }
