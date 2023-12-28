@@ -1,34 +1,33 @@
 import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 
-import { IBasaltWebSocket } from '@/Interfaces';
+import { IBasaltWebSocket } from '@/Interface';
 
 export interface IBasaltWebSocketEvent {
-
     /**
      * Protocol
      */
     protocol?: string;
 
     /**
-     * Max payload length (default: 16 * 1024)
+     * Max payload length (default: 16 * 1024 corresponds to 16kb)
      */
     maxPayloadLength?: number;
 
     /**
-     * Handshake timeout (default: 10000)
+     * Handshake timeout (default: 10000 ms)
      */
     handshakeTimeout?: number;
 
     /**
      * Lifecycle onUpgradeHook: Called when a client connect
-     * @param res
-     * @param req
+     * @param res Response object
+     * @param req Request object
      */
     onUpgradeHook?: (res: HttpResponse, req: HttpRequest) => unknown | void;
 
     /**
      * Lifecycle onConnectHook: Called when a client connect
-     * @param ws WebSocket
+     * @param ws WebSocket object
      */
     onConnectHook?: (ws: IBasaltWebSocket) => void;
 

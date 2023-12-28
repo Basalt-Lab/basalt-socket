@@ -3,12 +3,17 @@ import { RecognizedString } from 'uWebSockets.js';
 import {
     IBasaltHttpRequest,
     IBasaltHttpResponse,
-    IBasaltSocketEvents,
+    IBasaltSocketRouter,
     IBasaltSocketServerListenOptions,
     IBasaltWebSocket
-} from '@/Interfaces';
+} from '@/Interface';
 
 export interface IBasaltSocketServer {
+    /**
+     * Return true if the server is listening.
+     * @returns True if the server is listening.
+     */
+    get isListening(): boolean
 
     /**
      * Sets a hook that is called when a client initiates an upgrade request.
@@ -68,5 +73,5 @@ export interface IBasaltSocketServer {
      * @throws {Error} If an event listener for any of the events already exists.
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed)
      */
-    use(prefix: string, events: IBasaltSocketEvents | IBasaltSocketEvents[]): void
+    use(prefix: string, events: IBasaltSocketRouter | IBasaltSocketRouter[]): void
 }

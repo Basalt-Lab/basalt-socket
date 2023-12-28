@@ -1,2 +1,2 @@
 export * from './BasaltSocketServer';
-export * from './BasaltSocketEvents';
+export * from './BasaltSocketRouter';

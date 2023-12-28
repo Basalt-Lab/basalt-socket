@@ -7,6 +7,8 @@ import {
     RecognizedString
 } from 'uWebSockets.js';
 
+import { createServer, Server } from 'net';
+
 import {
     IBasaltHttpRequest,
     IBasaltHttpResponse,
@@ -15,11 +17,13 @@ import {
     IBasaltWebSocket,
     IBasaltWebSocketEvent,
     IBasaltSocketServerListenOptions,
-    IBasaltSocketEvents
-} from '@/Interfaces';
+    IBasaltSocketRouter
+} from '@/Interface';
 
 /**
  * Represents a WebSocket server using µWebSockets.js.
+ * It is a wrapper around the TemplatedApp class.
+ * @see https://unetworking.github.io/uWebSockets.js/generated/index.html
  * This server supports various lifecycle hooks and can publish messages to topics.
  */
 export class BasaltSocketServer implements IBasaltSocketServer {
@@ -30,6 +34,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
     private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
     private _listenToken: us_listen_socket | undefined;
+    private _isListening: boolean = false;
     private _routes: Set<string> = new Set();
 
     /**
@@ -37,13 +42,20 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @param options Configuration options for the µWebSockets.js App.
      */
     public constructor(options: IBasaltSocketServerOptions = {
-
         maxPayloadLength: 16 * 1024,
         handshakeTimeout: 10000,
         origins: []
     }) {
         this._app = App(options);
         this._options = options;
+    }
+
+    /**
+     * Return true if the server is listening.
+     * @returns True if the server is listening.
+     */
+    public get isListening(): boolean {
+        return this._isListening;
     }
 
     /**
@@ -87,17 +99,52 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     }
 
     /**
+     * Checks if the given port is available.
+     * @param port - The port to check.
+     * @private
+     */
+    private checkPort(port: number): Promise<boolean> {
+        const server: Server = createServer();
+        return new Promise<boolean>((resolve, reject): void => {
+            server.listen(port, () => {
+                server.once('close', () => {
+                    resolve(true);
+                });
+                server.close();
+            });
+            server.on('error', (err: {code?: string}): void => {
+                if (err.code === 'EADDRINUSE')
+                    resolve(false);
+                else
+                    reject(err);
+            });
+        });
+    }
+
+    /**
      * Starts listening on the specified port.
      * @throws {Error} If the server fails to start listening on the port.
      * @param options The options to use for listening. (port, host, verbose)
+     * @returns True if the server is listening; false otherwise.
      */
-    public listen(options: Partial<IBasaltSocketServerListenOptions>): void {
-        this._app.listen(options?.host ?? 'localhost', options?.port ?? 3000, (token: us_listen_socket | false): void => {
-            if (!token)
-                throw new Error(`BasaltSocketServer : failed to listen to port ${options?.port ?? 3000}`);
-            this._listenToken = token;
-            if (options.verbose ?? true)
-                console.log(`BasaltSocketServer : listening to port ${options?.port ?? 3000}`);
+    public async listen(options: Partial<IBasaltSocketServerListenOptions> = {
+        port: 7025,
+        host: 'localhost'
+    }): Promise<boolean> {
+        const isAvailable: boolean = await this.checkPort(options.port!);
+        if (!isAvailable)
+            throw new Error(`BasaltSocketServer : failed to listen to port ${options.port!}`);
+
+        return new Promise((resolve, reject): void => {
+            this._app.listen(options.host!, options.port!, (token: us_listen_socket | false) => {
+                if (!token) {
+                    reject(new Error(`BasaltSocketServer : failed to listen to port ${options.port!}`));
+                } else {
+                    this._listenToken = token;
+                    this._isListening = true;
+                    resolve(true);
+                }
+            });
         });
     }
 
@@ -109,6 +156,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
         if (this._listenToken) {
             us_listen_socket_close(this._listenToken);
             this._listenToken = undefined;
+            this._isListening = false;
         } else {
             throw new Error('BasaltSocketServer : server is not listening');
         }
@@ -251,7 +299,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * @throws {Error} If the prefix is invalid (only alphanumeric characters, - and _ are allowed).
      * @public
      */
-    public use(prefix: string, events: IBasaltSocketEvents | IBasaltSocketEvents[]): void {
+    public use(prefix: string, events: IBasaltSocketRouter | IBasaltSocketRouter[]): void {
         if (!Array.isArray(events))
             events = [events];
 
