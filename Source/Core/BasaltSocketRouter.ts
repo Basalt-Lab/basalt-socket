@@ -1,6 +1,6 @@
-import { IBasaltSocketEvents, IBasaltWebSocketEvent } from '@/Interfaces';
+import { IBasaltSocketRouter, IBasaltWebSocketEvent } from '@/Interface';
 
-export class BasaltSocketEvents implements IBasaltSocketEvents {
+export class BasaltSocketRouter implements IBasaltSocketRouter {
     private readonly _events: Map<string, IBasaltWebSocketEvent> = new Map();
 
     /**

@@ -10,7 +10,7 @@ const external = dependencies || [];
 
 async function run() {
     const options = {
-        entryPoints: ['./Sources/App.ts'],
+        entryPoints: ['./Source/App.ts'],
         outfile: './Build/App.js',
         bundle: true,
         platform: 'node',
@@ -20,7 +20,7 @@ async function run() {
         color: true,
         plugins: [
             alias({
-                "@/*": join(basePath, "/*"),
+                "@/*": join(basePath, "Source/*"),
             }),
         ]
     };
