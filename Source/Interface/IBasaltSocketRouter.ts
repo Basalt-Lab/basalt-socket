@@ -1,6 +1,6 @@
-import { IBasaltWebSocketEvent } from '@/Interfaces';
+import { IBasaltWebSocketEvent } from '@/Interface';
 
-export interface IBasaltSocketEvents {
+export interface IBasaltSocketRouter {
     /**
      * Add an event to the list
      * @param name Name of the event

@@ -1,34 +1,46 @@
 import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 
-import { IBasaltWebSocket } from '@/Interfaces';
+import { IBasaltWebSocket } from '@/Interface';
 
 export interface IBasaltWebSocketEvent {
-
     /**
      * Protocol
      */
     protocol?: string;
 
     /**
-     * Max payload length (default: 16 * 1024)
+     * Max payload length (default: 16 * 1024 corresponds to 16kb)
      */
     maxPayloadLength?: number;
 
     /**
-     * Handshake timeout (default: 10000)
+     * Idle timeout in seconds (default: 120)
      */
-    handshakeTimeout?: number;
+    idleTimeout?: number;
+
+    /**
+     * Maximum number of minutes a WebSocket may be connected before being closed by the server. 0 disables the feature. (Source: uWebSockets.js)
+     * @see https://unetworking.github.io/uWebSockets.js/generated/interfaces/WebSocketBehavior.html#maxLifetime
+     */
+    maxLifeTime?: number;
+
+    /**
+     * Whether or not we should automatically send pings to uphold a stable connection given whatever idleTimeout (Source: uWebSockets.js)
+     * Defaults to true
+     * @see https://unetworking.github.io/uWebSockets.js/generated/interfaces/WebSocketBehavior.html#sendPingsAutomatically
+     */
+    sendPongAutomatically?: boolean;
 
     /**
      * Lifecycle onUpgradeHook: Called when a client connect
-     * @param res
-     * @param req
+     * @param res Response object
+     * @param req Request object
      */
     onUpgradeHook?: (res: HttpResponse, req: HttpRequest) => unknown | void;
 
     /**
      * Lifecycle onConnectHook: Called when a client connect
-     * @param ws WebSocket
+     * @param ws WebSocket object
      */
     onConnectHook?: (ws: IBasaltWebSocket) => void;
 
@@ -46,6 +58,15 @@ export interface IBasaltWebSocketEvent {
      * @param message Message received
      */
     onReceivedHook?: (ws: IBasaltWebSocket, message: ArrayBuffer) => void;
+
+    /**
+     * Lifecycle onSubscriptionHook: Called when a client subscribe to a topic
+     * @param ws WebSocket
+     * @param topic Topic subscribed
+     * @param newCount New count of subscription in topic
+     * @param oldCount Old count of subscription in topic
+     */
+    onSubscriptionHook?: (ws: IBasaltWebSocket, topic: ArrayBuffer, newCount: number, oldCount: number) => void;
 
     /**
      * Handler: Called when a client send a message

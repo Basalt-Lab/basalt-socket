@@ -15,7 +15,7 @@
   ],
   "compilerOptions": {
     "declaration": true,
-    "baseUrl": "./Sources",
+    "baseUrl": "./Source",
     "paths": {
       "@/*": ["./*"]
     },
