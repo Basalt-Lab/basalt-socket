@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.4.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.2...v1.4.0) (2024-01-25)
+
+
+### Features
+
+* add new features + refactor ([34ad19e](https://github.com/Basalt-Lab/basalt-socket/commit/34ad19ea140f9a948c9cdbbcec38df190f2efc9e))
+* change patch, rename, and add check if port is used ([a84ebef](https://github.com/Basalt-Lab/basalt-socket/commit/a84ebeff26c70f6dd6bc07b5d7e16c6a504cb76f))
+
+
+### Build System
+
+* update package and change path ([024b500](https://github.com/Basalt-Lab/basalt-socket/commit/024b50089b6acade50497deb0b5027a10bf21cc4))
+
+
+### Tests
+
+* add tests ([8949cc0](https://github.com/Basalt-Lab/basalt-socket/commit/8949cc0b999857db34551a29046eaf55a1ebd34f))
+
+
+### Documentation
+
+* update readme ([a05579c](https://github.com/Basalt-Lab/basalt-socket/commit/a05579cb15099c375dcd7c4481e5ad01ad69d013))
+
 ## [1.3.2](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.1...v1.3.2) (2023-12-12)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@basalt-lab/basalt-socket",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Socket module for Basalt Framework",
   "main": "Build/App.js",
   "types": "Build/App.d.ts",
