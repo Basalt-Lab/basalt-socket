@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.4.1](https://github.com/Basalt-Lab/basalt-socket/compare/v1.4.0...v1.4.1) (2024-01-26)
+
+
+### Bug Fixes
+
+* bug fix res.end in upgrade dont stop the lifecycle ([a48dac9](https://github.com/Basalt-Lab/basalt-socket/commit/a48dac9c8731c086ba7c0c48476c2cb9afbdaf5f))
+
+
+### Code Refactoring
+
+* remove unused import ([45b7fc2](https://github.com/Basalt-Lab/basalt-socket/commit/45b7fc29fe24055abd27870edbf8118c7282a293))
+
+
+### Build System
+
+* update package ([21827ec](https://github.com/Basalt-Lab/basalt-socket/commit/21827ecb503711499357ada1147c72b66a9d8b70))
+
+
+### Tests
+
+* add units tests ([8bcec22](https://github.com/Basalt-Lab/basalt-socket/commit/8bcec2230e09743d7b4b1c1bfb7d534d8d0aa2bf))
+
 ## [1.4.0](https://github.com/Basalt-Lab/basalt-socket/compare/v1.3.2...v1.4.0) (2024-01-25)
 
 
