@@ -33,7 +33,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
     private _onConnectedHook: ((ws: IBasaltWebSocket) => void) | undefined;
     private _onDisconnectHook: ((ws: IBasaltWebSocket, code: number, message: ArrayBuffer) => void) | undefined;
     private _onReceivedHook: ((ws: IBasaltWebSocket, message: ArrayBuffer) => void) | undefined;
-    private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void) | undefined;
+    private _onUpgradeHook: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => object | boolean | void) | undefined;
     private _onSubscriptionHook: ((ws: IBasaltWebSocket, topic: ArrayBuffer, newCount: number, oldCount: number) => void) | undefined;
     private _listenToken: us_listen_socket | undefined;
     private _isListening: boolean = false;
@@ -65,7 +65,7 @@ export class BasaltSocketServer implements IBasaltSocketServer {
      * Sets a hook that is called when a client initiates an upgrade request.
      * @param hooks - The function to call on an upgrade event.
      */
-    public set onUpgradeHook(hooks: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => unknown | void)) {
+    public set onUpgradeHook(hooks: ((res: IBasaltHttpResponse, req: IBasaltHttpRequest) => object | boolean | void)) {
         this._onUpgradeHook = hooks;
     }
 
@@ -232,14 +232,27 @@ export class BasaltSocketServer implements IBasaltSocketServer {
         if (!this.isOriginAllowed(origin) && this._options.origins != undefined && this._options.origins.length > 0) {
             res
                 .writeStatus('401 Unauthorized')
-                .writeHeader('Basalt-Socket-Error', 'Origin not allowed').end();
+                .writeHeader('Basalt-Socket-Error', 'Origin not allowed')
+                .end();
             return;
         }
 
         res.cork((): void => {
-            let userData = this._onUpgradeHook ? this._onUpgradeHook(res, req) ?? {} : {};
-            if (event.onUpgradeHook)
-                userData = { ...userData, ...(event.onUpgradeHook(res, req) ?? {}) };
+            let userData: object = {};
+            if (this._onUpgradeHook) {
+                const data: object | boolean | void = this._onUpgradeHook(res, req);
+                if (typeof data === 'boolean' && !data)
+                    return;
+                if (typeof data === 'object')
+                    userData = data;
+            }
+            if (event.onUpgradeHook) {
+                const data: object | boolean | void = event.onUpgradeHook(res, req);
+                if (typeof data === 'boolean' && !data)
+                    return;
+                if (typeof data === 'object')
+                    userData = { ...userData, ...data };
+            }
 
             res.upgrade(
                 userData,
