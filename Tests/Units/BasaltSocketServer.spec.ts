@@ -1,7 +1,7 @@
 import { describe, test, expect } from '@jest/globals';
 import WebSocket from 'ws';
 
-import { BasaltSocketRouter, BasaltSocketServer, IBasaltWebSocket } from '@/App';
+import { BasaltSocketRouter, BasaltSocketServer, IBasaltHttpResponse, IBasaltWebSocket } from '@/App';
 
 afterEach((): void => {
     jest.restoreAllMocks();
@@ -51,6 +51,56 @@ describe('BasaltSocketServer', (): void => {
             });
             server.stop();
         });
+
+        test('should stop the connection when the onUpgrade hook res.end and returns false', async (): Promise<void> => {
+            const server: BasaltSocketServer = new BasaltSocketServer();
+            server.onUpgradeHook = (res: IBasaltHttpResponse): boolean => {
+                res.writeStatus('401 Unauthorized').end();
+                return false;
+            };
+            const router: BasaltSocketRouter = new BasaltSocketRouter();
+            router.add('', {});
+            server.use('/', router);
+
+            const port: number = await server.listen();
+
+            await new Promise<void>((resolve): void => {
+                const ws: WebSocket = new WebSocket(`ws://localhost:${port}`);
+                ws.on('error', (error: Error): void => {
+                    expect(error.message).toBe('Unexpected server response: 401');
+                    resolve();
+                });
+            });
+            server.stop();
+        });
+
+        test('should user data when the onUpgrade hook returns an object', async (): Promise<void> => {
+            const server: BasaltSocketServer = new BasaltSocketServer();
+            server.onUpgradeHook = (): object => {
+                return {
+                    test: 'test'
+                };
+            };
+
+            server.onConnectHook = (ws: IBasaltWebSocket): void => {
+                expect(ws.getUserData()).toEqual({ test: 'test' });
+            };
+            const router: BasaltSocketRouter = new BasaltSocketRouter();
+            router.add('', {});
+            server.use('/', router);
+
+            const port: number = await server.listen();
+
+            await new Promise<void>((resolve): void => {
+                const ws: WebSocket = new WebSocket(`ws://localhost:${port}`);
+                ws.on('open', (): void => {
+                    ws.close();
+                    resolve();
+                });
+            });
+            server.stop();
+        });
+
     });
 
     describe('setter onConnectHook', (): void => {
@@ -353,6 +403,57 @@ describe('BasaltSocketServer', (): void => {
                 ws.on('error', (error: Error): void => {
                     ws.close();
                     reject(error);
+                });
+            });
+            server.stop();
+        });
+
+        test('should stop the connection when the onUpgradeHook of the given event res.end and returns false',  async (): Promise<void> => {
+            const server: BasaltSocketServer = new BasaltSocketServer();
+            const router: BasaltSocketRouter = new BasaltSocketRouter();
+            router.add('', {
+                onUpgradeHook: (res: IBasaltHttpResponse): boolean => {
+                    res.writeStatus('401 Unauthorized').end();
+                    return false;
+                }
+            });
+            server.use('/', router);
+
+            const port: number = await server.listen();
+
+            await new Promise<void>((resolve): void => {
+                const ws: WebSocket = new WebSocket(`ws://localhost:${port}`);
+                ws.on('error', (error: Error): void => {
+                    expect(error.message).toBe('Unexpected server response: 401');
+                    resolve();
+                });
+            });
+            server.stop();
+        });
+
+        test('should user data when the onUpgradeHook of the given event returns an object',  async (): Promise<void> => {
+            const server: BasaltSocketServer = new BasaltSocketServer();
+
+            server.onConnectHook = (ws: IBasaltWebSocket): void => {
+                expect(ws.getUserData()).toEqual({ test: 'test' });
+            };
+            const router: BasaltSocketRouter = new BasaltSocketRouter();
+            router.add('', {
+                onUpgradeHook: (): object => {
+                    return {
+                        test: 'test'
+                    };
+                }
+            });
+            server.use('/', router);
+
+            const port: number = await server.listen();
+
+            await new Promise<void>((resolve): void => {
+                const ws: WebSocket = new WebSocket(`ws://localhost:${port}`);
+                ws.on('open', (): void => {
+                    ws.close();
+                    resolve();
                 });
             });
             server.stop();

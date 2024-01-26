@@ -49,6 +49,6 @@
     "ws": "^8.16.0"
   },
   "dependencies": {
-    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.38.0"
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.41.0"
   }
 }

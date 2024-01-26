@@ -1,6 +1,4 @@
-import { HttpRequest, HttpResponse } from 'uWebSockets.js';
-
-import { IBasaltWebSocket } from '@/Interface';
+import { IBasaltHttpRequest, IBasaltHttpResponse, IBasaltWebSocket } from '@/Interface';
 
 export interface IBasaltWebSocketEvent {
     /**
@@ -36,7 +34,7 @@ export interface IBasaltWebSocketEvent {
      * @param res Response object
      * @param req Request object
      */
-    onUpgradeHook?: (res: HttpResponse, req: HttpRequest) => unknown | void;
+    onUpgradeHook?: (res: IBasaltHttpResponse, req: IBasaltHttpRequest) => object | boolean | void;
 
     /**
      * Lifecycle onConnectHook: Called when a client connect
